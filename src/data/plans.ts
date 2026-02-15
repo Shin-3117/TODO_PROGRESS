@@ -1,7 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { filterPlans } from "@/domain/filters";
 import { calculateProgressRate, toNumber } from "@/domain/progress";
-import type { CreatePlanInput, LabelRow, PlanDetail, PlanRow, PlanSummary, ProgressLogRow } from "@/domain/types";
+import type {
+  CreatePlanInput,
+  LabelRow,
+  PlanDetail,
+  PlanRow,
+  PlanSummary,
+  ProgressLogRow,
+  UpdatePlanInput
+} from "@/domain/types";
 
 type PlanLabelJoinRow = {
   plan_id: string;
@@ -216,4 +224,59 @@ export async function createPlanForUser(supabase: SupabaseClient, userId: string
   }
 
   return plan;
+}
+
+export async function updatePlanForUser(
+  supabase: SupabaseClient,
+  userId: string,
+  planId: string,
+  input: UpdatePlanInput
+): Promise<void> {
+  const title = input.title.trim();
+  const unit = input.unit.trim();
+
+  if (!title) {
+    throw new Error("제목을 입력해 주세요.");
+  }
+
+  if (!unit) {
+    throw new Error("단위를 입력해 주세요.");
+  }
+
+  const { error: planError } = await supabase
+    .from("plans")
+    .update({
+      title,
+      description: input.description?.trim() || null,
+      unit,
+      target_value: Number.isFinite(input.targetValue) ? input.targetValue : 0
+    })
+    .eq("id", planId)
+    .eq("user_id", userId);
+
+  if (planError) {
+    throw new Error(`Failed to update plan: ${planError.message}`);
+  }
+
+  const { error: deleteError } = await supabase.from("plan_labels").delete().eq("plan_id", planId).eq("user_id", userId);
+
+  if (deleteError) {
+    throw new Error(`Failed to delete old plan labels: ${deleteError.message}`);
+  }
+
+  const labelIds = Array.from(new Set((input.labelIds ?? []).map((id) => id.trim()).filter(Boolean)));
+
+  if (labelIds.length) {
+    const { error: linkError } = await supabase.from("plan_labels").insert(
+      labelIds.map((labelId) => ({
+        user_id: userId,
+        plan_id: planId,
+        label_id: labelId
+      }))
+    );
+
+    if (linkError) {
+      throw new Error(`Failed to map labels to plan: ${linkError.message}`);
+    }
+  }
 }

@@ -2,8 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { requireUser } from "@/data/auth";
+import { listLabelsForUser } from "@/data/labels";
 import { getPlanDetailForUser } from "@/data/plans";
 import { AddProgressDialog } from "@/components/add-progress-dialog";
+import { EditPlanDialog } from "@/components/edit-plan-dialog";
 import { ProgressCalendar } from "@/components/progress-calendar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,7 +34,7 @@ function labelStyle(color: string | null) {
 
 export default async function PlanDetailPage({ params }: PlanDetailPageProps) {
   const { supabase, user } = await requireUser();
-  const plan = await getPlanDetailForUser(supabase, user.id, params.id);
+  const [plan, labels] = await Promise.all([getPlanDetailForUser(supabase, user.id, params.id), listLabelsForUser(supabase, user.id)]);
 
   if (!plan) {
     notFound();
@@ -47,7 +49,10 @@ export default async function PlanDetailPage({ params }: PlanDetailPageProps) {
             목록으로
           </Link>
         </Button>
-        <AddProgressDialog planId={plan.id} />
+        <div className="flex gap-2">
+          <EditPlanDialog plan={plan} labels={labels} />
+          <AddProgressDialog planId={plan.id} />
+        </div>
       </div>
 
       <Card>

@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { AddProgressDialog } from "@/components/add-progress-dialog";
+import { EditPlanDialog } from "@/components/edit-plan-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { formatProgressPercent, formatValue } from "@/domain/progress";
-import type { PlanSummary } from "@/domain/types";
+import type { LabelRow, PlanSummary } from "@/domain/types";
 
 interface PlansListProps {
   plans: PlanSummary[];
+  labels: LabelRow[];
 }
 
 function labelStyle(color: string | null) {
@@ -21,7 +23,7 @@ function labelStyle(color: string | null) {
   };
 }
 
-export function PlansList({ plans }: PlansListProps) {
+export function PlansList({ plans, labels }: PlansListProps) {
   if (!plans.length) {
     return (
       <div className="rounded-xl border border-dashed bg-card/80 p-8 text-center text-sm text-muted-foreground">
@@ -63,7 +65,8 @@ export function PlansList({ plans }: PlansListProps) {
               </div>
             </div>
 
-            <div className="shrink-0">
+            <div className="flex shrink-0 gap-2">
+              <EditPlanDialog plan={plan} labels={labels} />
               <AddProgressDialog planId={plan.id} />
             </div>
           </div>

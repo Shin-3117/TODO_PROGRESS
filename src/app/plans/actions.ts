@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createLabelForUser } from "@/data/labels";
-import { createPlanForUser } from "@/data/plans";
+import { createPlanForUser, updatePlanForUser } from "@/data/plans";
 import { createProgressLogForUser } from "@/data/progress-logs";
 import { createSupabaseServerClient } from "@/data/supabase/server";
 
@@ -60,6 +60,35 @@ export async function createLabelAction(input: { name: string; color?: string })
 
     await createLabelForUser(supabase, user.id, input);
     revalidatePath("/plans");
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, message: resolveErrorMessage(error) };
+  }
+}
+
+export async function updatePlanAction(
+  planId: string,
+  input: {
+    title: string;
+    description?: string;
+    unit: string;
+    targetValue: number;
+    labelIds: string[];
+  }
+): Promise<ActionResult> {
+  try {
+    const supabase = createSupabaseServerClient();
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { ok: false, message: "로그인이 필요합니다." };
+    }
+
+    await updatePlanForUser(supabase, user.id, planId, input);
+    revalidatePath("/plans");
+    revalidatePath(`/plans/${planId}`);
     return { ok: true };
   } catch (error) {
     return { ok: false, message: resolveErrorMessage(error) };

@@ -51,7 +51,7 @@ export default async function PlansPage({ searchParams }: PlansPageProps) {
       </section>
 
       <PlansToolbar labels={labels} initialSearchQuery={query} initialSelectedLabelIds={selectedLabelIds} />
-      <PlansList plans={plans} />
+      <PlansList plans={plans} labels={labels} />
     </main>
   );
 }

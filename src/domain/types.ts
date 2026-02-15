@@ -72,3 +72,11 @@ export interface CreateProgressLogInput {
   note?: string;
   date?: string;
 }
+
+export interface UpdatePlanInput {
+  title: string;
+  description?: string;
+  unit: string;
+  targetValue: number;
+  labelIds?: string[];
+}
